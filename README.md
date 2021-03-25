@@ -14,6 +14,8 @@ spring.cache.host=localhost
 spring.cache.port=6379
 ```
 
+ps:若图片无法直接显示，请单独打开图片查看
+
 #### 无缓存水平扩展
 
 使用gatling做压力测试，模拟100个用户访问
