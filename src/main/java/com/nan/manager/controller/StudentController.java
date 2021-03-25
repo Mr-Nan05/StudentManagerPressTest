@@ -6,6 +6,7 @@ import javax.validation.Valid;
 import com.nan.manager.model.Student;
 import com.nan.manager.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 
-@Controller // This means that this class is a Controller
+@RestController // This means that this class is a Controller
 @RequestMapping(path="/manager") // This means URL's start with /demo (after Application path)
 public class StudentController {
 
@@ -24,6 +25,8 @@ public class StudentController {
         this.studentService = studentService;
     }
 
+    @Autowired
+    private CacheManager cacheManager;
 
 //    @InitBinder
 //    public void setAllowedFields(WebDataBinder dataBinder) {
@@ -70,6 +73,18 @@ public class StudentController {
 
     @GetMapping(path="/students")
     public @ResponseBody Iterable<Student> getAllStudents() {
-        return studentService.findAllStudents();
+        long startTime = System.currentTimeMillis();
+        Iterable<Student> students =  studentService.findAllStudents();
+        long endTime = System.currentTimeMillis();
+        System.out.println(endTime - startTime);
+        return students;
+    }
+
+    // clear all cache using cache manager
+    @RequestMapping(value = "clearCache")
+    public void clearCache() {
+        for (String name : cacheManager.getCacheNames()) {
+            cacheManager.getCache(name).clear();
+        }
     }
 }

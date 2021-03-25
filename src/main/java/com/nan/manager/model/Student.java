@@ -4,8 +4,18 @@ package com.nan.manager.model;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+
+@Data
 @Entity
-public class Student {
+@AllArgsConstructor
+@NoArgsConstructor
+public class Student implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     //@GeneratedValue(strategy=GenerationType.AUTO)
     @Id
