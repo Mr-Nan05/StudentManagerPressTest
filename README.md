@@ -14,7 +14,7 @@ spring.cache.host=localhost
 spring.cache.port=6379
 ```
 
-ps:若图片无法直接显示，请单独打开图片查看
+ps:启动本程序前请启动redis，若图片无法直接显示，请单独打开图片查看
 
 #### 无缓存水平扩展
 

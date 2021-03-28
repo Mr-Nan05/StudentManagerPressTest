@@ -8,50 +8,94 @@ import com.nan.manager.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 
-@RestController // This means that this class is a Controller
+@Controller // This means that this class is a Controller
 @RequestMapping(path="/manager") // This means URL's start with /demo (after Application path)
 public class StudentController {
 
     private final StudentService studentService;
 
     @Autowired
+    private CacheManager cacheManager;
+
+    @Autowired
     public StudentController(StudentService studentService) {
         this.studentService = studentService;
     }
 
-    @Autowired
-    private CacheManager cacheManager;
 
 //    @InitBinder
 //    public void setAllowedFields(WebDataBinder dataBinder) {
 //        dataBinder.setDisallowedFields("id");
 //    }
 
+    @GetMapping("/")
+    public String Welcome(){
+        return "home_page";
+    }
+
+    @GetMapping("/add")
+    public String addNewStudent(Model student) {
+        student.addAttribute("student", new Student());
+        return "add_student";
+    }
+
     @PostMapping(path="/add") // Map ONLY POST Requests
-    public @ResponseBody
-    String addNewStudent (@Valid Student student, BindingResult result) {
+    public String addNewStudent (@ModelAttribute Student student, BindingResult result) {
         if (result.hasErrors()) {
-            return "failed to add student";
+            return "error";
         } else {
-            studentService.saveStudent(student);
-            return "redirect:/students/" + student.getId();
+            try {
+                studentService.saveStudent(student);
+            } catch (Exception exception){
+                return "error";
+            }
         }
+        return "redirect:/manager/select_by_id/?id=" + student.getId();
+    }
+
+    @GetMapping("/update")
+    public String alterStudent(Model student) {
+        student.addAttribute("student", new Student());
+        return "update_student";
     }
 
     @PostMapping(path="/update")
-    public @ResponseBody String alterStudent(@Valid Student student, BindingResult result){
+    public String alterStudent(@ModelAttribute Student student, BindingResult result){
         if (result.hasErrors()) {
-            return "failed to update student " + student.getId();
+            return "error";
         } else {
-            studentService.updateStudent(student);
-            return "update:/students/" + student.getId();
+            try {
+                System.out.println("update student:"+student.getId());
+                studentService.updateStudent(student);
+
+            } catch (Exception exception){
+                System.out.println("something wrong:" + exception.toString());
+                return "error";
+            }
+            return "redirect:/manager/select_by_id/?id=" + student.getId();
         }
+    }
+
+    @GetMapping("/select")
+    public String selectStudent(Model student) {
+        student.addAttribute("student", new Student());
+        return "select_student";
+    }
+
+    @PostMapping("/select")
+    public String selectStudent(@ModelAttribute Student student) {
+        if(student.getId() != null)
+            return "redirect:/manager/select_by_id/?id=" + student.getId();
+        if(student.getName() != null)
+            return "redirect:/manager/select_by_name/?name=" + student.getName();
+        return "error";
     }
 
     @GetMapping(path="/select_by_id")
@@ -64,22 +108,23 @@ public class StudentController {
         return studentService.findStudentByName(name);
     }
 
-    @GetMapping(path="/delete")
-    public @ResponseBody String deleteStudent(@RequestParam Integer id){
-        if(studentService.deleteStudent(id))
-            return "delete student " + id + " successfully!";
-        return "not exist student " + id;
+    @GetMapping("/delete")
+    public String deleteStudent(Model student) {
+        student.addAttribute("student", new Student());
+        return "delete_student";
+    }
+
+    @PostMapping(path="/delete")
+    public String deleteStudent(@ModelAttribute Student student){
+        if(studentService.deleteStudent(student.getId()))
+            return "redirect:/manager/students";
+        return "error";
     }
 
     @GetMapping(path="/students")
     public @ResponseBody Iterable<Student> getAllStudents() {
-        long startTime = System.currentTimeMillis();
-        Iterable<Student> students =  studentService.findAllStudents();
-        long endTime = System.currentTimeMillis();
-        System.out.println(endTime - startTime);
-        return students;
+        return studentService.findAllStudents();
     }
-
     // clear all cache using cache manager
     @RequestMapping(value = "clearCache")
     public void clearCache() {
